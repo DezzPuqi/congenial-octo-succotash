@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Request Monitor</title>
+<title>Request Monitor – Live</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -14,46 +14,76 @@
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    width: 360px;
+    width: 400px;
   }
   #log {
     margin-top: 16px;
     padding: 10px;
     background: #eee;
     border-radius: 6px;
-    height: 150px;
+    height: 200px;
     overflow-y: auto;
     font-size: 14px;
+  }
+  .status {
+    font-size: 12px;
+    margin-top: 6px;
+    color: #888;
   }
 </style>
 </head>
 <body>
+
 <div class="card">
-  <h2>Request Monitor</h2>
+  <h2>Request Monitor (Live)</h2>
+
   <div>Total Requests: <span id="total">0</span></div>
   <div>Your Requests: <span id="mine">0</span></div>
   <div>Your IP: <span id="ip">-</span></div>
 
-  <button id="pingBtn">Send Request</button>
+  <button id="pingBtn">Manual Request</button>
+
+  <div class="status">Live log berjalan setiap 1 detik...</div>
 
   <div id="log"></div>
 </div>
 
 <script>
-async function ping() {
+
+async function fetchLive() {
+  try {
+    const res = await fetch("/api/hit");
+    const data = await res.json();
+
+    document.getElementById("total").textContent = data.totalRequests;
+    document.getElementById("mine").textContent = data.requestsByIP;
+    document.getElementById("ip").textContent = data.yourIP;
+
+    const log = document.getElementById("log");
+    log.innerHTML += `[LIVE] ${new Date().toLocaleTimeString()} — Total: ${data.totalRequests}<br>`;
+    log.scrollTop = log.scrollHeight;
+
+  } catch (err) {
+    console.log("Live fetch error", err);
+  }
+}
+
+async function manualPing() {
   const res = await fetch("/api/hit");
   const data = await res.json();
 
-  document.getElementById("total").textContent = data.totalRequests;
-  document.getElementById("mine").textContent = data.requestsByIP;
-  document.getElementById("ip").textContent = data.yourIP;
-
   const log = document.getElementById("log");
-  log.innerHTML += `Hit @ ${new Date().toLocaleTimeString()} — Total: ${data.totalRequests}<br>`;
+  log.innerHTML += `[MANUAL] ${new Date().toLocaleTimeString()} — Total: ${data.totalRequests}<br>`;
   log.scrollTop = log.scrollHeight;
 }
 
-document.getElementById("pingBtn").onclick = ping;
+// manual request
+document.getElementById("pingBtn").onclick = manualPing;
+
+// live log polling setiap 1 detik
+setInterval(fetchLive, 1000);
+
 </script>
+
 </body>
-  </html>
+</html>
