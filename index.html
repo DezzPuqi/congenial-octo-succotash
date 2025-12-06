@@ -2,87 +2,59 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Request Monitor – Live</title>
+<title>Live Request Log</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f8f9fa;
-    padding: 20px;
-  }
+  body { font-family: Arial, sans-serif; background: #f8f9fa; padding: 20px; }
   .card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    width: 400px;
+    background: white; padding: 20px; border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 420px;
   }
   #log {
-    margin-top: 16px;
-    padding: 10px;
-    background: #eee;
-    border-radius: 6px;
-    height: 200px;
-    overflow-y: auto;
-    font-size: 14px;
-  }
-  .status {
-    font-size: 12px;
-    margin-top: 6px;
-    color: #888;
+    margin-top: 16px; padding: 10px; background: #eee;
+    border-radius: 6px; height: 250px; overflow-y: auto; font-size: 14px;
   }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>Request Monitor (Live)</h2>
+  <h2>Live Request Log</h2>
 
   <div>Total Requests: <span id="total">0</span></div>
-  <div>Your Requests: <span id="mine">0</span></div>
-  <div>Your IP: <span id="ip">-</span></div>
 
-  <button id="pingBtn">Manual Request</button>
-
-  <div class="status">Live log berjalan setiap 1 detik...</div>
+  <div class="status">Updating every 1s...</div>
 
   <div id="log"></div>
 </div>
 
 <script>
-
-async function fetchLive() {
+async function updateLog() {
   try {
-    const res = await fetch("/api/hit");
+    const res = await fetch("/api/logs");
     const data = await res.json();
 
-    document.getElementById("total").textContent = data.totalRequests;
-    document.getElementById("mine").textContent = data.requestsByIP;
-    document.getElementById("ip").textContent = data.yourIP;
+    const logs = data.logs;
 
-    const log = document.getElementById("log");
-    log.innerHTML += `[LIVE] ${new Date().toLocaleTimeString()} — Total: ${data.totalRequests}<br>`;
-    log.scrollTop = log.scrollHeight;
+    document.getElementById("total").textContent = logs.length;
+
+    const logBox = document.getElementById("log");
+    logBox.innerHTML = "";
+
+    logs.forEach(l => {
+      const time = new Date(l.time).toLocaleTimeString();
+      logBox.innerHTML += `[${time}] IP: ${l.ip} — Total: ${l.total}<br>`;
+    });
+
+    logBox.scrollTop = logBox.scrollHeight;
 
   } catch (err) {
-    console.log("Live fetch error", err);
+    console.log("Log error:", err);
   }
 }
 
-async function manualPing() {
-  const res = await fetch("/api/hit");
-  const data = await res.json();
-
-  const log = document.getElementById("log");
-  log.innerHTML += `[MANUAL] ${new Date().toLocaleTimeString()} — Total: ${data.totalRequests}<br>`;
-  log.scrollTop = log.scrollHeight;
-}
-
-// manual request
-document.getElementById("pingBtn").onclick = manualPing;
-
-// live log polling setiap 1 detik
-setInterval(fetchLive, 1000);
-
+// Ambil log setiap 1 detik
+setInterval(updateLog, 1000);
+updateLog();
 </script>
 
 </body>
